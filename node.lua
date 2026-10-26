@@ -24,7 +24,7 @@ local MOIS  = {"janvier","février","mars","avril","mai","juin","juillet",
 local function jour_semaine(y, m, d)   -- 0 = dimanche
   local t = {0,3,2,5,0,3,5,2,6,4,2,4}
   if m < 3 then y = y - 1 end
-  return (y + y//4 - y//100 + y//400 + t[m] + d) % 7
+  return (y + math.floor(y/4) - math.floor(y/100) + math.floor(y/400) + t[m] + d) % 7
 end
 
 local function decalage(utc)
