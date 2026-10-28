@@ -13,8 +13,31 @@ local BLEU   = {0.00, 0.36, 0.67}
 local ORANGE = {0.97, 0.58, 0.12}
 local BLANC  = {1, 1, 1}
 
-local tex_orange = resource.create_colored_texture(ORANGE[1], ORANGE[2], ORANGE[3], 1)
-local tex_blanc  = resource.create_colored_texture(1, 1, 1, 1)
+local tex_orange  = resource.create_colored_texture(ORANGE[1], ORANGE[2], ORANGE[3], 1)
+local tex_blanc   = resource.create_colored_texture(1, 1, 1, 1)
+local tex_bandeau = resource.create_colored_texture(0, 0, 0, 0.18)   -- assombrit le fond du texte defilant
+
+-- Texte defilant (reglable depuis le tableau de bord info-beamer)
+local COULEURS = {
+  blanc  = BLANC,
+  orange = ORANGE,
+  jaune  = {1.00, 0.85, 0.10},
+  rouge  = {0.90, 0.10, 0.10},
+  vert   = {0.20, 0.75, 0.30},
+}
+local VITESSES = {   -- fraction de la largeur de l'ecran parcourue par seconde
+  ["1"] = 0.05, ["2"] = 0.08, ["3"] = 0.12, ["4"] = 0.18, ["5"] = 0.25,
+}
+
+local defile_texte   = "Bienvenue dans votre magasin E.Leclerc"
+local defile_vitesse = VITESSES["3"]
+local defile_couleur = BLANC
+
+util.json_watch("config.json", function(config)
+  defile_texte   = config.texte or ""
+  defile_vitesse = VITESSES[tostring(config.vitesse)] or VITESSES["3"]
+  defile_couleur = COULEURS[config.couleur] or BLANC
+end)
 
 local JOURS = {"DIMANCHE","LUNDI","MARDI","MERCREDI","JEUDI","VENDREDI","SAMEDI"}
 local MOIS  = {"janvier","février","mars","avril","mai","juin","juillet",
@@ -38,6 +61,33 @@ end
 local function centre(texte, y, taille, c)
   local w = font:width(texte, taille)
   font:write((WIDTH - w) / 2, y, texte, taille, c[1], c[2], c[3], 1)
+end
+
+-- Jour (orange) et date (blanc) sur une seule ligne, reduits si trop larges
+local function jour_et_date(jour, date, y, taille)
+  local espace = font:width(" ", taille)
+  local total  = font:width(jour, taille) + espace + font:width(date, taille)
+  local max_w  = WIDTH * 0.94
+  if total > max_w then
+    taille = taille * max_w / total
+    espace = font:width(" ", taille)
+    total  = font:width(jour, taille) + espace + font:width(date, taille)
+  end
+  local x = (WIDTH - total) / 2
+  font:write(x, y, jour, taille, ORANGE[1], ORANGE[2], ORANGE[3], 1)
+  x = x + font:width(jour, taille) + espace
+  font:write(x, y, date, taille, BLANC[1], BLANC[2], BLANC[3], 1)
+end
+
+local function texte_defilant(y, taille)
+  if defile_texte == "" then return end
+  local marge = taille * 0.25
+  tex_bandeau:draw(0, y - marge, WIDTH, y + taille + marge)
+
+  local parcours = WIDTH + font:width(defile_texte, taille)
+  local x        = WIDTH - (sys.now() * defile_vitesse * WIDTH) % parcours
+  local c        = defile_couleur
+  font:write(x, y, defile_texte, taille, c[1], c[2], c[3], 1)
 end
 
 local function dessiner_logo()
@@ -81,17 +131,20 @@ function node.render()
     heure = string.format("%02d:%02d", d.hour, d.min)
   end
 
-  centre(heure, HEIGHT * 0.05, HEIGHT * 0.38, BLANC)
+  centre(heure, HEIGHT * 0.05, HEIGHT * 0.36, BLANC)
 
   -- Filet orange
   local lw = WIDTH * 0.30
-  tex_orange:draw((WIDTH - lw) / 2, HEIGHT * 0.48,
-                  (WIDTH + lw) / 2, HEIGHT * 0.492)
+  tex_orange:draw((WIDTH - lw) / 2, HEIGHT * 0.43,
+                  (WIDTH + lw) / 2, HEIGHT * 0.442)
 
-  -- Jour et date
-  centre(JOURS[d.wday], HEIGHT * 0.51, HEIGHT * 0.10, ORANGE)
-  centre(string.format("%d %s %d", d.day, MOIS[d.month], d.year),
-         HEIGHT * 0.63, HEIGHT * 0.065, BLANC)
+  -- Jour et date sur une ligne
+  jour_et_date(JOURS[d.wday],
+               string.format("%d %s %d", d.day, MOIS[d.month], d.year),
+               HEIGHT * 0.46, HEIGHT * 0.09)
+
+  -- Texte defilant
+  texte_defilant(HEIGHT * 0.60, HEIGHT * 0.075)
 
   -- Logo en bas, centré
   dessiner_logo()

@@ -1,5 +1,39 @@
 {
   "name": "Horloge Leclerc",
   "permissions": {},
-  "options": []
+  "options": [
+    {
+      "title": "Texte défilant",
+      "name": "texte",
+      "type": "string",
+      "placeholder": "Laisser vide pour masquer le bandeau",
+      "default": "Bienvenue dans votre magasin E.Leclerc"
+    },
+    {
+      "title": "Vitesse de défilement",
+      "name": "vitesse",
+      "type": "select",
+      "options": [
+        ["1", "Très lente"],
+        ["2", "Lente"],
+        ["3", "Normale"],
+        ["4", "Rapide"],
+        ["5", "Très rapide"]
+      ],
+      "default": "3"
+    },
+    {
+      "title": "Couleur du texte défilant",
+      "name": "couleur",
+      "type": "select",
+      "options": [
+        ["blanc", "Blanc"],
+        ["orange", "Orange Leclerc"],
+        ["jaune", "Jaune"],
+        ["rouge", "Rouge"],
+        ["vert", "Vert"]
+      ],
+      "default": "blanc"
+    }
+  ]
 }
